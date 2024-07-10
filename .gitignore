@@ -1,5 +1,5 @@
 *.db
 compile_commands.json
-a.out
+program_inventory.exe
 .cache
-sqlite3
+sqlite3.obj
