@@ -30,3 +30,10 @@ In a powershell instance ran as administrator run:
 ```make build```
 
 The output will be `program_inventory.exe`
+
+#### Generating docs
+You need to install `doxygen` and run:
+```
+doxygen Doxyfile
+```
+Then you can view the generated docs by opening `docs/html/index.html` with your browser.
