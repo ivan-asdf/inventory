@@ -3,3 +3,4 @@ compile_commands.json
 program_inventory.exe
 .cache
 sqlite3.obj
+docs/

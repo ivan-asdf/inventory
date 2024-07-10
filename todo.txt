@@ -1,0 +1,10 @@
+addActicle - make id a param
+updateArticle - make the updating of certain values optional
+generateReport - add printing of counts, quantity counts, total prices etc
+
+searchArticle - make searching complex
+
+add test
+
+maybe add sorting
+maybe add interactive cli

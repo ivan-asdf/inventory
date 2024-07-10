@@ -16,7 +16,7 @@ class InventoryManager {
 public:
   InventoryManager(const std::string &db_name);
 
-  void addArticle(const std::string &name, int quantity, double price,
+  void addArticle(int id, const std::string &name, int quantity, double price,
                   const std::string &supplier);
   void updateArticle(int id, int quantity, double price);
   void deleteArticle(int id);
@@ -26,13 +26,11 @@ public:
 private:
   decltype(make_storage(
       "",
-      make_table("INVENTORY",
-                 make_column("ID", &Article::id, primary_key().autoincrement()),
-                 make_column("NAME", &Article::name),
-                 make_column("QUANTITY", &Article::quantity),
-                 make_column("PRICE", &Article::price),
-                 make_column("SUPPLIER", &Article::supplier)))) storage;
-  void throwException(const char* context, int id, std::system_error error);
+      make_table("Inventory", make_column("Id", &Article::id, primary_key().autoincrement()),
+                 make_column("Name", &Article::name), make_column("Quantity", &Article::quantity),
+                 make_column("Price", &Article::price),
+                 make_column("Supplier", &Article::supplier)))) storage;
+  void throwException(const char *context, int id, std::system_error error);
 };
 
 #endif // INVENTORY_MANAGER_H

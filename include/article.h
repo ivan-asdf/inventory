@@ -13,8 +13,8 @@ struct Article {
 
   std::string toString() const {
     std::stringstream ss;
-    ss << "Article(ID: " << id << ", Name: " << name << ", Quantity: " << quantity
-       << ", Price: " << price << ", Supplier: " << supplier << ")";
+    ss << "Article{ID: " << id << ", Name: " << name << ", Quantity: " << quantity
+       << ", Price: " << price << ", Supplier: " << supplier << "}";
     return ss.str();
   }
 };
