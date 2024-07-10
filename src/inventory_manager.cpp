@@ -1,12 +1,16 @@
 #include <exception>
 #include <sstream>
+#include <string>
 #include <system_error>
 
 #include "inventory_manager.h"
+#include "tabulate.hpp"
 
-InventoryManager::InventoryManager(const std::string &db_name)
+const std::string InventoryManager::DB_NAME = "inventory.db";
+
+InventoryManager::InventoryManager()
     : storage(make_storage(
-          db_name,
+          DB_NAME,
           make_table("Inventory", make_column("Id", &Article::id, primary_key().autoincrement()),
                      make_column("Name", &Article::name),
                      make_column("Quantity", &Article::quantity),
@@ -117,6 +121,19 @@ void InventoryManager::searchArticles(const std::string &criteria) {
   std::cout << table << std::endl;
 }
 
+/**
+ * @brief Generates and prints a report of all articles in the inventory.
+ *
+ * Retrieves all articles from database, constructs a formatted table
+ * containing article details including ID, name, quantity, price,
+ * and supplier information. Computes summary statistics such as
+ * total number of articles, total quantity across all articles,
+ * and total price of all articles. Outputs the report to the console
+ * in a structured format.
+ *
+ * @throws std::runtime_error If an error occurs during the insertion into the database.
+ * The thrown exception is nested with the original std::system_error.
+ */
 void InventoryManager::generateReport() {
   std::vector<Article> articles;
 
@@ -128,13 +145,29 @@ void InventoryManager::generateReport() {
     std::throw_with_nested(std::runtime_error(errorMsg.str()));
   }
 
-  Table table;
-  table.add_row({"ID", "Name", "Quantity", "Price", "Supplier"});
-  for (const Article &article : articles) {
-    table.add_row({std::to_string(article.id), article.name, std::to_string(article.quantity),
-                   std::to_string(article.price), article.supplier});
-  }
+  Table root;
 
-  std::cout << "Report:\n";
-  std::cout << table << std::endl;
+  root.add_row({"Report"});
+  root[0].format().font_align(FontAlign::center).font_style({FontStyle::bold});
+
+  Table articlesTable;
+  articlesTable.add_row({"ID", "Name", "Quantity", "Price", "Supplier"});
+  int totalCount = 0 , totalQuantity = 0;
+  double totalPrice = 0.0;
+  for (const Article &article : articles) {
+    articlesTable.add_row({std::to_string(article.id), article.name, std::to_string(article.quantity),
+                   std::to_string(article.price), article.supplier});
+    totalCount++;
+    totalQuantity+=article.quantity;
+    totalPrice+=article.price;
+  }
+  root.add_row({articlesTable});
+
+  Table summaryTable;
+  summaryTable.add_row({"Total Articles Count", "Total Quantity", "Total Price"});
+  summaryTable.add_row({std::to_string(totalCount), std::to_string(totalQuantity), std::to_string(totalPrice)});
+  root.add_row({summaryTable});
+  root[2].format().font_align(FontAlign::center).font_style({FontStyle::bold});
+
+  std::cout << root << std::endl;
 }

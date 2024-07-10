@@ -1,7 +1,7 @@
 #include "inventory_manager.h"
 
 int main() {
-  InventoryManager manager("inventory.db");
+  InventoryManager manager;
 
   // manager.addArticle(-1, "Article1", 10, 9.99, "Supplier1");
   // manager.addArticle(200, "Article2", 20, 19.99, "Supplier2");

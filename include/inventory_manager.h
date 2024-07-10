@@ -12,9 +12,10 @@ using namespace sqlite_orm;
 using namespace tabulate;
 
 class InventoryManager {
+  static const std::string DB_NAME;
 
 public:
-  InventoryManager(const std::string &db_name);
+  InventoryManager();
 
   void addArticle(int id, const std::string &name, int quantity, double price,
                   const std::string &supplier);
@@ -25,7 +26,7 @@ public:
 
 private:
   decltype(make_storage(
-      "",
+      DB_NAME,
       make_table("Inventory", make_column("Id", &Article::id, primary_key().autoincrement()),
                  make_column("Name", &Article::name), make_column("Quantity", &Article::quantity),
                  make_column("Price", &Article::price),
