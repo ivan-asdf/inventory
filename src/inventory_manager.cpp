@@ -4,9 +4,64 @@
 #include <system_error>
 
 #include "inventory_manager.h"
+#include "sqlite_orm/sqlite_orm.h"
 #include "tabulate.hpp"
 
 const std::string InventoryManager::DB_NAME = "inventory.db";
+
+std::string InventoryManager::SearchFieldToString(SearchField field) {
+  switch (field) {
+  case Id:
+    return std::string("Id");
+  case Name:
+    return std::string("Name");
+  case Quantity:
+    return std::string("Quantity");
+  case Price:
+    return std::string("Price");
+  case Supplier:
+    return std::string("Supplier");
+  default:
+    return std::string("(UNKNOWN SEARCH FIELD)");
+  }
+}
+
+std::string InventoryManager::SearchTypeToString(SearchType type) {
+  switch (type) {
+  case Equals:
+    return std::string("equals");
+  case GreaterThan:
+    return std::string("greater than");
+  case LesserThan:
+    return std::string("lesser than");
+  default:
+    return std::string("(UNKNOWN SEARCH TYPE)");
+  }
+}
+
+InventoryManager::SearchValue::SearchValue(const char *s) {
+  type = Type::String;
+  String = s;
+}
+InventoryManager::SearchValue::SearchValue(int x) {
+  type = Type::Integer;
+  Integer = x;
+}
+InventoryManager::SearchValue::SearchValue(double x) {
+  type = Type::Double;
+  Double = x;
+}
+
+std::string InventoryManager::SearchValue::toString() {
+  switch (type) {
+  case Type::String:
+    return std::string("\"") + String + std::string("\"");
+  case Type::Integer:
+    return std::to_string(Integer);
+  case Type::Double:
+    return std::to_string(Double);
+  }
+}
 
 InventoryManager::InventoryManager()
     : storage(make_storage(
@@ -69,6 +124,7 @@ void InventoryManager::addArticle(int id, const std::string &name, int quantity,
 
   std::cout << "Record created successfully\n";
 }
+
 /**
  * @brief Updates an article's information in the inventory.
  *
@@ -128,17 +184,144 @@ void InventoryManager::deleteArticle(int id) {
   std::cout << "Record deleted successfully\n";
 }
 
-void InventoryManager::searchArticles(const std::string &criteria) {
+/**
+ * @brief Searches articles in the inventory based on the specified search criteria.
+ *
+ * This method allows searching for articles using different fields such as Id, Name, Quantity,
+ * Price, and Supplier. Depending on the field, various search types like Equals, GreaterThan,
+ * and LesserThan can be applied.
+ *
+ * @param field The field of the article to search by. It can be one of the following:
+ *              - SearchField::Id
+ *              - SearchField::Name
+ *              - SearchField::Quantity
+ *              - SearchField::Price
+ *              - SearchField::Supplier
+ *
+ * @param type The type of comparison to use for the search. It can be one of the following:
+ *             - SearchType::Equals
+ *             - SearchType::GreaterThan
+ *             - SearchType::LesserThan
+ *
+ * @param value The value to compare against. The type of this value depends on the field being
+ * searched:
+ *              - For SearchField::Id and SearchField::Quantity, an integer is expected.
+ *              - For SearchField::Price, a double is expected.
+ *              - For SearchField::Name and SearchField::Supplier, a string is expected.
+ *
+ * @throws std::runtime_error If an unknown search type or field is specified, or if there is a
+ *                            system error during the search.
+ *
+ * This method prints the search results in a tabular format to the standard output. The table
+ * includes columns for ID, Name, Quantity, Price, and Supplier.
+ *
+ * @note For string fields(Name, Supplier) only "Equals" search type is available. Which searches if given value is
+ * substring of the specified field.
+ * @note If an unsupported search params combination is given such as (Name, GreaterThan) a warning will be printed.
+ *
+ * Example usage:
+ * @code
+ * InventoryManager manager;
+ * SearchValue value;
+ * manager.searchArticles(SearchField::Id, SearchType::GreaterThan, SearchValue(5));
+ * @endcode
+ */
+void InventoryManager::searchArticles(SearchField field, SearchType type, SearchValue value) {
   std::vector<Article> articles;
 
   try {
-    articles = storage.get_all<Article>(
-        where(like(&Article::name, criteria) or like(&Article::supplier, criteria)));
+    switch (field) {
+    case SearchField::Id:
+      switch (type) {
+      case SearchType::Equals:
+        articles = storage.get_all<Article>(where(is_equal(&Article::id, value.Integer)));
+        break;
+      case SearchType::GreaterThan:
+        articles = storage.get_all<Article>(where(greater_than(&Article::id, value.Integer)));
+        break;
+      case SearchType::LesserThan:
+        articles = storage.get_all<Article>(where(lesser_than(&Article::id, value.Integer)));
+        break;
+      default:
+        throw std::runtime_error("Unknown search type: " + std::to_string(type));
+      }
+      break;
+    case SearchField::Name:
+      switch (type) {
+      case SearchType::Equals:
+        articles = storage.get_all<Article>(
+            where(like(&Article::name, std::string("%") + value.String + std::string("%"))));
+        break;
+      case SearchType::GreaterThan:
+      case SearchType::LesserThan:
+        std::cout << "Search combination not supported: " << searchOptionsString(field, type, value)
+                  << std::endl;
+        break;
+      default:
+        throw std::runtime_error("Unknown search type: " + std::to_string(type));
+      }
+      break;
+    case SearchField::Quantity:
+      switch (type) {
+      case SearchType::Equals:
+        articles = storage.get_all<Article>(where(is_equal(&Article::quantity, value.Integer)));
+        break;
+      case SearchType::GreaterThan:
+        articles = storage.get_all<Article>(where(greater_than(&Article::quantity, value.Integer)));
+        break;
+      case SearchType::LesserThan:
+        articles = storage.get_all<Article>(where(lesser_than(&Article::quantity, value.Integer)));
+        break;
+      default:
+        throw std::runtime_error("Unknown search type: " + std::to_string(type));
+      }
+      break;
+    case SearchField::Price:
+      switch (type) {
+      case SearchType::Equals:
+        articles = storage.get_all<Article>(where(is_equal(&Article::price, value.Double)));
+        break;
+      case SearchType::GreaterThan:
+        articles = storage.get_all<Article>(where(greater_than(&Article::price, value.Double)));
+        break;
+      case SearchType::LesserThan:
+        articles = storage.get_all<Article>(where(lesser_than(&Article::price, value.Double)));
+        break;
+      default:
+        throw std::runtime_error("Unknown search type: " + std::to_string(type));
+      }
+      break;
+    case SearchField::Supplier:
+      switch (type) {
+      case SearchType::Equals:
+        articles = storage.get_all<Article>(
+            where(like(&Article::supplier, std::string("%") + value.String + std::string("%"))));
+        break;
+      case SearchType::GreaterThan:
+      case SearchType::LesserThan:
+        std::cout << "Search combination not supported: " << searchOptionsString(field, type, value)
+                  << std::endl;
+        break;
+      default:
+        throw std::runtime_error("Unknown search type: " + std::to_string(type));
+      }
+      break;
+    default:
+      throw std::runtime_error("Unknown search field: " + std::to_string(field));
+    }
   } catch (const std::system_error e) {
     std::stringstream errorMsg;
     errorMsg << "Error when searching articles : " << e.what();
     std::throw_with_nested(std::runtime_error(errorMsg.str()));
   }
+
+  Table root;
+
+  root.add_row({"Search Results"});
+  root[0].format().font_align(FontAlign::center).font_style({FontStyle::bold});
+
+  root.add_row({searchOptionsString(field, type, value)});
+  root[1].format().font_align(FontAlign::center).font_style({FontStyle::bold});
 
   Table table;
   table.add_row({"ID", "Name", "Quantity", "Price", "Supplier"});
@@ -146,9 +329,9 @@ void InventoryManager::searchArticles(const std::string &criteria) {
     table.add_row({std::to_string(article.id), article.name, std::to_string(article.quantity),
                    std::to_string(article.price), article.supplier});
   }
+  root.add_row({table});
 
-  std::cout << "Search results:\n";
-  std::cout << table << std::endl;
+  std::cout << root << std::endl;
 }
 
 /**
@@ -202,4 +385,11 @@ void InventoryManager::generateReport() {
   root[2].format().font_align(FontAlign::center).font_style({FontStyle::bold});
 
   std::cout << root << std::endl;
+}
+
+std::string InventoryManager::searchOptionsString(SearchField field, SearchType type,
+                                                  SearchValue value) {
+  std::stringstream ss;
+  ss << SearchFieldToString(field) << " " << SearchTypeToString(type) << " " << value.toString();
+  return ss.str();
 }
