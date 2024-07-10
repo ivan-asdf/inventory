@@ -121,8 +121,6 @@ void InventoryManager::addArticle(int id, const std::string &name, int quantity,
     errorMsg << "Error when creating article " << article.toString() << ": " << e.what();
     std::throw_with_nested(std::runtime_error(errorMsg.str()));
   }
-
-  std::cout << "Record created successfully\n";
 }
 
 /**
@@ -169,19 +167,31 @@ void InventoryManager::updateArticle(int id, const char *name = nullptr, int qua
     errorMsg << "Error when updating article with ID " << id << ": " << e.what();
     std::throw_with_nested(std::runtime_error(errorMsg.str()));
   }
-
-  std::cout << "Record updated successfully\n";
 }
-
+/**
+ * @brief Deletes an article from the inventory.
+ *
+ * This method attempts to remove an article with the specified ID from the storage.
+ *
+ * @param id The ID of the article to be deleted.
+ *
+ * @throws std::runtime_error If an error occurs during deletion.
+ * The thrown exception is nested with the original std::system_error.
+ *
+ * Example usage:
+ * @code
+ * InventoryManager manager;
+ * manager.deleteArticle(123);
+ * @endcode
+ */
 void InventoryManager::deleteArticle(int id) {
   try {
     storage.remove<Article>(id);
   } catch (const std::system_error e) {
     std::stringstream errorMsg;
-    errorMsg << "Error when deliting article with ID " << id << ": " << e.what();
+    errorMsg << "Error when deleting article with ID " << id << ": " << e.what();
     std::throw_with_nested(std::runtime_error(errorMsg.str()));
   }
-  std::cout << "Record deleted successfully\n";
 }
 
 /**
@@ -215,15 +225,17 @@ void InventoryManager::deleteArticle(int id) {
  * This method prints the search results in a tabular format to the standard output. The table
  * includes columns for ID, Name, Quantity, Price, and Supplier.
  *
- * @note For string fields(Name, Supplier) only "Equals" search type is available. Which searches if given value is
- * substring of the specified field.
- * @note If an unsupported search params combination is given such as (Name, GreaterThan) a warning will be printed.
+ * @note For string fields(Name, Supplier) only "Equals" search type is available. Which searches if
+ * given value is substring of the specified field.
+ * @note If an unsupported search params combination is given such as (Name, GreaterThan) a warning
+ * will be printed.
  *
  * Example usage:
  * @code
  * InventoryManager manager;
- * SearchValue value;
- * manager.searchArticles(SearchField::Id, SearchType::GreaterThan, SearchValue(5));
+ *  manager.searchArticles(InventoryManager::SearchField::Quantity,
+ *                         InventoryManager::SearchType::GreaterThan,
+ *                         InventoryManager::SearchValue(4));
  * @endcode
  */
 void InventoryManager::searchArticles(SearchField field, SearchType type, SearchValue value) {

@@ -14,7 +14,6 @@ int main() {
   manager.addArticle(4, "Article1", 7, 8.5, "Supplier3");
   manager.addArticle(5, "Article1", 7, 8.5, "Supplier3");
   manager.updateArticle(1, "Article2", 33, 7.2, "Supplier321312");
-  manager.deleteArticle(4);
   // manager.updateArticle(1, 0, -2, -1, nullptr);
 
   // manager.updateArticle(1, 15, 8.99);
@@ -54,6 +53,8 @@ int main() {
   //                        InventoryManager::SearchType::GreaterThan,
   //                        InventoryManager::SearchValue("ier3"));
   //
+  manager.deleteArticle(4);
+  manager.deleteArticle(4);
   manager.generateReport();
 
   return 0;

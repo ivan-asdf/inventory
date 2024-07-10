@@ -1,8 +1,1 @@
-searchArticle - make searching complex
-
-refactor articles table generation into method
-
 add test
-
-maybe add sorting
-maybe add interactive cli
