@@ -69,14 +69,44 @@ void InventoryManager::addArticle(int id, const std::string &name, int quantity,
 
   std::cout << "Record created successfully\n";
 }
-
-void InventoryManager::updateArticle(int id, int quantity, double price) {
+/**
+ * @brief Updates an article's information in the inventory.
+ *
+ * Retrieves the article with the specified ID from database and updates its
+ * attributes based on the provided parameters. If any parameter (name, quantity,
+ * price, supplier) is provided as non-null or non-negative, the corresponding
+ * attribute of the article is updated.
+ *
+ * @param id The unique identifier of the article to update.
+ * @param name The new name of the article (optional). If nullptr, the name remains unchanged.
+ * @param quantity The new quantity of the article (optional). Must be non-negative. If negative,
+ * quantity remains unchanged.
+ * @param price The new price of the article (optional). Must be non-negative. If negative, price
+ * remains unchanged.
+ * @param supplier The new supplier of the article (optional). If nullptr, the supplier remains
+ * unchanged.
+ *
+ * @throws std::runtime_error If an error occurs during the insertion into the database.
+ * The thrown exception is nested with the original std::system_error.
+ */
+void InventoryManager::updateArticle(int id, const char *name = nullptr, int quantity = -1,
+                                     double price = -1, const char *supplier = nullptr) {
   Article article;
 
   try {
     article = storage.get<Article>(id);
-    article.quantity = quantity;
-    article.price = price;
+    if (name) {
+      article.name = std::string(name);
+    }
+    if (quantity >= 0) {
+      article.quantity = quantity;
+    }
+    if (price >= 0.0) {
+      article.price = price;
+    }
+    if (supplier) {
+      article.supplier = std::string(supplier);
+    }
     storage.update(article);
   } catch (const std::system_error e) {
     std::stringstream errorMsg;
@@ -152,20 +182,22 @@ void InventoryManager::generateReport() {
 
   Table articlesTable;
   articlesTable.add_row({"ID", "Name", "Quantity", "Price", "Supplier"});
-  int totalCount = 0 , totalQuantity = 0;
+  int totalCount = 0, totalQuantity = 0;
   double totalPrice = 0.0;
   for (const Article &article : articles) {
-    articlesTable.add_row({std::to_string(article.id), article.name, std::to_string(article.quantity),
-                   std::to_string(article.price), article.supplier});
+    articlesTable.add_row({std::to_string(article.id), article.name,
+                           std::to_string(article.quantity), std::to_string(article.price),
+                           article.supplier});
     totalCount++;
-    totalQuantity+=article.quantity;
-    totalPrice+=article.price;
+    totalQuantity += article.quantity;
+    totalPrice += article.price;
   }
   root.add_row({articlesTable});
 
   Table summaryTable;
   summaryTable.add_row({"Total Articles Count", "Total Quantity", "Total Price"});
-  summaryTable.add_row({std::to_string(totalCount), std::to_string(totalQuantity), std::to_string(totalPrice)});
+  summaryTable.add_row(
+      {std::to_string(totalCount), std::to_string(totalQuantity), std::to_string(totalPrice)});
   root.add_row({summaryTable});
   root[2].format().font_align(FontAlign::center).font_style({FontStyle::bold});
 

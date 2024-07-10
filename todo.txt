@@ -1,5 +1,3 @@
-updateArticle - make the updating of certain values optional
-
 searchArticle - make searching complex
 
 add test

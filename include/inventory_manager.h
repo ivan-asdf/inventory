@@ -19,7 +19,8 @@ public:
 
   void addArticle(int id, const std::string &name, int quantity, double price,
                   const std::string &supplier);
-  void updateArticle(int id, int quantity, double price);
+  // void updateArticle(int id, int quantity, double price);
+  void updateArticle(int id, const char* name, int quantity, double price, const char* supplier);
   void deleteArticle(int id);
   void searchArticles(const std::string &criteria);
   void generateReport();
